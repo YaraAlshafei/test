@@ -1,14 +1,17 @@
-pipeline {
-    agent {
-        docker {
-            image 'maven:3-alpine'
- args '-v /root/.m2:/root/.m2' 
-        }
-stages {
-        stage('Build') { 
-            steps {
-                sh 'mvn -B -DskipTests clean package' 
-            }
-        }
+node("docker") {
+    docker.withRegistry('yarakh', '0598213430') {
+    
+        git url: "https://github.com/YaraAlshafei/test.git", credentialsId: 'yara'
+    
+        sh "git rev-parse HEAD > .git/commit-id"
+        def commit_id = readFile('.git/commit-id').trim()
+        println commit_id
+    
+        stage "build"
+        def app = docker.build "your-project-name"
+    
+        stage "publish"
+        app.push 'master'
+        app.push "${commit_id}"
     }
 }
